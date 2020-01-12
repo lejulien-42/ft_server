@@ -6,39 +6,36 @@
 #    By: lejulien <marvin@42.fr>                    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2019/12/30 16:48:12 by lejulien          #+#    #+#              #
-#    Updated: 2020/01/10 05:30:40 by lejulien         ###   ########.fr        #
+#    Updated: 2020/01/12 13:41:52 by lejulien         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
-#Nginx Dockerfile
-#
-
-# Base image to use.
 FROM debian:buster
 MAINTAINER lejulien "lejulien@student.42.fr"
-
-# Install Nginx
+RUN apt update
+RUN apt install -y nginx wget curl lsb-release gnupg php-mysql php-mbstring php-zip php-gd mariadb-server
 RUN apt-get update
-ADD ./srcs/wordpress /etc/nginx/sites-available/wordpress
-RUN apt-get install -y nginx wget mariadb-server mariadb-client php-fpm php-common php-mbstring php-xmlrpc php-soap php-gd php-xml php-intl php-mysql php-cli php-ldap php-zip php-curl
-
-COPY ./srcs/index.html /var/www/html/index.html
-
-RUN echo "\ndaemon off;" >> /etc/nginx/nginx.conf
+RUN apt install php-fpm -y
+RUN /etc/init.d/php7.3-fpm start
+RUN mkdir /var/www/localhost
+RUN rm /etc/nginx/sites-available/default
+COPY ./srcs/index.php /var/www/localhost/index.php
+ADD ./srcs/default.conf /etc/nginx/sites-available/default/default.conf
+RUN rm /etc/nginx/sites-enabled/default
+RUN ln -s /etc/nginx/sites-available/default/default.conf /etc/nginx/sites-enabled/default.conf
+RUN chmod 755 /var/www/localhost
 RUN cd /tmp
-RUN wget "https://fr.wordpress.org/latest-fr_FR.tar.gz"
-RUN tar -xvf latest-fr_FR.tar.gz
-
-RUN mv wordpress /var/www/html/wordpress
-RUN chown -R www-data:www-data /var/www/html/wordpress/
-RUN chmod -R 755 /var/www/html/wordpress/
-RUN ln -s /etc/nginx/sites-available/wordpress /etc/nginx/sites-enabled/
-ADD srcs/wp-config.php /var/www/html/wordpress/wp-config.php
-RUN ln -s /usr/share/phpmyadmin /var/www/html/phpmyadmin
-# set the working dir
-WORKDIR /etc/nginx
-
-#define the default command
-ENTRYPOINT ["nginx"]
-
-
-COPY ./srcs/index.html /etc/nginx/html/
+RUN wget https://files.phpmyadmin.net/phpMyAdmin/4.9.0.1/phpMyAdmin-4.9.0.1-all-languages.tar.gz
+RUN curl -O https://wordpress.org/latest.tar.gz
+RUN tar -xvf latest.tar.gz
+RUN rm latest.tar.gz
+RUN mv wordpress /var/www/localhost/wordpress
+RUN chown -R www-data:www-data /var/www/localhost/wordpress
+RUN find /var/www/localhost/wordpress/ -type d -exec chmod 750 {} \;
+RUN find /var/www/localhost/wordpress/ -type f -exec chmod 640 {} \;
+RUN tar xvf phpMyAdmin-4.9.0.1-all-languages.tar.gz
+RUN mv phpMyAdmin-4.9.0.1-all-languages/ /var/www/localhost/phpmyadmin
+RUN cp /var/www/localhost/phpmyadmin/config.sample.inc.php /var/www/localhost/phpmyadmin/config.inc.php
+RUN service nginx reload
+RUN service mysql start
+COPY ./srcs/script.sh ./script.sh
+ENTRYPOINT ["/bin/bash", "./script.sh"]
