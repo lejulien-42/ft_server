@@ -1,4 +1,4 @@
-service nginx start
+
 service php7.3-fpm start
 service mysql start
 mysql -u root -bse "
@@ -7,4 +7,5 @@ GRANT ALL ON wordpress_db.* TO 'wordpress_user'@'localhost' IDENTIFIED BY 'passw
 CREATE USER 'admin'@'localhost' IDENTIFIED BY 'toor';
 GRANT ALL PRIVILEGES ON *.* TO 'admin'@'localhost';
 FLUSH PRIVILEGES;"
-cat
+nginx -g 'daemon off;'
+bash
