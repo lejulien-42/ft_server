@@ -1,3 +1,9 @@
+Script de redirection
+<?php
+  header('Location: ./site/index.html');
+  exit();
+?>
+
 <html>
 	<head>
 		<title>42ft_server</title>

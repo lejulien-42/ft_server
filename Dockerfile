@@ -26,6 +26,7 @@ RUN /etc/init.d/php7.3-fpm start
 RUN mkdir /var/www/localhost
 RUN rm /etc/nginx/sites-available/default
 COPY ./srcs/index.php /var/www/localhost/index.php
+ADD ./srcs/site /var/www/localhost/site
 
 # Adding nginx conf file
 
